@@ -2,41 +2,30 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 
-N = 50
+N = 50 #num datapoints
+M = 10 #num basis functions 
+rate = 0.01 #adjustment rate
+num_iter = 200 #num optimization iterations
 
-x = tf.random.uniform([N], dtype=tf.float64)
-#x = np.random.rand(N)
-#print(x)
+#generate noisy sinusoidal data 
+#x = tf.random.uniform([N], dtype=tf.float64)
+x = tf.Variable(np.random.rand(N))
 y = tf.math.sin(np.pi * 2 * x) + 0.1 * np.random.randn(N)
-#y = np.sin(np.pi * 2 * x)
-#print(y)
 
-#clean sin 
-sin_x = np.linspace(0,1,100)
-sin_y = np.sin(np.pi * 2 * sin_x)
-#replace with lambda 
+#generate clean data for plots 
+clean_x = np.linspace(0,1,100)
+clean_y = np.sin(np.pi * 2 * clean_x)
 
-plt.plot(sin_x, sin_y)
-plt.plot(x.numpy(), y.numpy(), '.')
-#plt.show()
-
-M = 10
-
-#b = tf.random.uniform([M, 1])
-#u = tf.random.uniform([M, 1])
-#q = tf.random.uniform([M, 1])
-#w = tf.random.uniform([M, 1])
-
-my_params = {
+#generate initial state for basis functions 
+params = {
     'w' : tf.Variable(np.zeros([M,1]) + 0.1),
     'b' : tf.Variable(np.zeros([M,1]) + 0.0),
     #'b' : tf.Variable(np.array([0.0]).reshape(-1,1), dtype=tf.float64),
     'mu' : tf.Variable(np.random.uniform(0,1,M).reshape(-1,1)),
-    'sig': tf.Variable(np.zeros([M,1]) + 0.1)
+    'sig': tf.Variable(np.zeros([M,1]) + 0.3)
+    #'sig': tf.Variable(np.random.uniform(0,1,M).reshape(-1,1))
 }
-
-print(my_params)
-
+    
 def y_h(param, x):
     acc = param['w'] * tf.math.exp(-((x-param['mu'])**2)/param['sig']**2) + param['b']
     return tf.math.reduce_sum(acc, axis=0)
@@ -45,45 +34,56 @@ def j(param, x, y):
     y_est = y_h(param, x)
     return (y-y_est)**2 / 2
 
-ewave = y_h(my_params, sin_x)
-plt.plot(sin_x, ewave)
-#plt.plot(x, j(my_params, x, y), '.')
+def plot_basis(M, p, x):
+    for j in range(M):
+        p_j = {}
+        for i in p:
+            p_j[i] = ((params[i]).numpy()[j]).reshape(-1,1)
+        plt.plot(x, y_h(p_j, x))
+
+#show initial basis functions 
+plot_basis(M, params, clean_x)
+plt.title("Initial Basis Functions")
+plt.xlabel('x')
+plt.ylabel('y', rotation=0)
+plt.xlim([0,1])
 plt.show()
 
-rate = 0.01
-num_iter = 10
+#view before optimization
+fit_bad = y_h(params, clean_x)
+plt.plot(clean_x, clean_y)
+plt.plot(clean_x, fit_bad, '--')
+plt.plot(x.numpy(), y.numpy(), '.')
+plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
+plt.title("Estimate Before Optimization")
+plt.show()
 
+#gradient descent loop 
 for i in range(num_iter):
     with tf.GradientTape() as tape:
-        loss = j(my_params, x, y)
-    grads = tape.gradient(loss, my_params)
-    print(i)
-    print(grads['b'])
-    my_params['w'].assign(my_params['w'].numpy() - rate*grads['w'].numpy())
-    #my_params['b'].assign(my_params['b'].numpy() - 0.0001*grads['b'].numpy())
-    my_params['mu'].assign(my_params['mu'].numpy() - rate*grads['mu'].numpy())
-    my_params['sig'].assign(my_params['sig'].numpy() - rate*grads['sig'].numpy())
-    #ewave = y_h(my_params, sin_x)
-    #plt.plot(sin_x, ewave)
-    #plt.plot(x, j(my_params, x, y), '.')
-    #plt.plot(sin_x, sin_y)
-    #plt.show()
+        loss = j(params, x, y)
+    grad = tape.gradient(loss, params)
+    params['w'].assign(params['w'] - rate*grad['w'])
+    params['b'].assign(params['b'] - rate*np.divide(params['b'].numpy(), grad['b'].numpy()))
+    #scale because otherwise result is unreasonable
+    params['mu'].assign(params['mu'] - rate*grad['mu'])
+    params['sig'].assign(params['sig'] - rate*grad['sig'])
 
-print(my_params)
-ewave = y_h(my_params, sin_x)
-plt.plot(sin_x, sin_y)
-plt.plot(sin_x, ewave)
+#print(params)
+#plot the optimized result
+y_fit = y_h(params, clean_x)
+plt.plot(clean_x, clean_y)
+plt.plot(clean_x, y_fit, '--')
 plt.plot(x.numpy(), y.numpy(), '.')
+#plt.plot(clean_x, j(params, clean_x, clean_y))
+plt.title("Estimate After Optimization")
+plt.xlabel('x')
+plt.ylabel('y', rotation=0)
+plt.xlim([0,1])
+#plt.ylim([-1,1])
 plt.show()
 
-for base in range(M):
-    sparm = {}
-    for x in my_params:
-        #print("HELLO")
-        #print(base, x)
-        #print(my_params[x][base])
-        sparm[x] = ((my_params[x]).numpy()[base]).reshape(-1,1)
-    print(sparm)
-    plt.plot(sin_x, y_h(sparm, sin_x))
-
+plot_basis(M, params, clean_x)
+plt.title("Basis Functions After Optimization")
+plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
 plt.show()
