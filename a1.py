@@ -57,7 +57,7 @@ plt.plot(x.numpy(), y.numpy(), '.')
 plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
 plt.title("Estimate Before Optimization")
 plt.show()
-plt.savefig('bad.eps', format='eps')
+plt.savefig('bad.svg', format='svg')
 
 #gradient descent loop 
 for i in range(num_iter):
