@@ -46,8 +46,8 @@ def plot_basis(M, p, x):
 plot_basis(M, params, clean_x)
 plt.title("Initial Basis Functions")
 plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
-#plt.show()
 plt.savefig('initial_basis.pdf', format='pdf')
+#plt.show()
 plt.clf()
 
 #view before optimization
@@ -58,8 +58,8 @@ plt.plot(x.numpy(), y.numpy(), '.', label='Data points')
 plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
 plt.title("Estimate Before Optimization")
 plt.legend()
-plt.show()
 plt.savefig('before_opt.pdf', format='pdf')
+plt.show()
 plt.clf()
 
 #gradient descent loop 
@@ -82,12 +82,13 @@ plt.plot(x.numpy(), y.numpy(), '.', label='Data points')
 plt.title("Estimate After Optimization")
 plt.legend()
 plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
-plt.show()
 plt.savefig('after_opt.pdf', format='pdf')
+plt.show()
 plt.clf()
 
 plot_basis(M, params, clean_x)
 plt.title("Basis Functions After Optimization")
 plt.xlabel('x'); plt.ylabel('y', rotation=0); plt.xlim([0,1])
-#plt.show()
 plt.savefig('final_basis.pdf', format='pdf')
+#plt.show()
+
