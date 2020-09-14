@@ -1,0 +1,17 @@
+import tensorflow as tf
+import numpy as np
+import matplotlib.pyplot as plt
+
+th = np.linspace(-np.pi, -9/2 * np.pi, num=50)
+r_red = th
+r_blu = -th
+
+def x(r,th):
+    return r * np.cos(th)
+
+def y(r,th):
+    return r * np.sin(th)
+
+plt.plot(x(r_blu, th), y(r_blu, th))
+plt.plot(x(r_red, th), y(r_red, th))
+plt.show()
