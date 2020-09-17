@@ -27,7 +27,7 @@ mymlp.add(Dense(16, input_dim=2, activation='relu'))
 mymlp.add(Dense(1, activation='sigmoid'))
 
 mymlp.compile(loss='binary_crossentropy',
-              optimizer='rmsprop',
+              optimizer='Adam',
               metrics=['accuracy'])
 
 # trains the model
