@@ -29,8 +29,10 @@ class MyModel(Model):
   def __init__(self):
     super(MyModel, self).__init__()
     self.flatten = Flatten() #just a convenience layer to reshape my inputs 
-    self.d1 = Dense(64, activation='relu', kernel_regularizer=keras.regularizers.l2(0.0001))
-    self.drp1 = Dropout(0.1)
+    self.d1 = Dense(18, activation='elu', kernel_regularizer=keras.regularizers.l2(0.0001))
+    #dropout hidden layer
+    self.drp1 = Dropout(0.01)
+    #output layer fully connected
     self.d2 = Dense(10)
   def call(self, x):
     x = self.flatten(x)
@@ -42,7 +44,7 @@ class MyModel(Model):
 model = MyModel()
 
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True)
-optimizer = tf.keras.optimizers.Adam()
+optimizer = tf.keras.optimizers.Adam(learning_rate=0.004, beta_1=0.9, beta_2=0.999)
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='train_accuracy')
@@ -54,9 +56,17 @@ test_loss = tf.keras.metrics.Mean(name='test_loss')
 test_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(name='test_accuracy')
 
 model.compile(optimizer=optimizer, loss=loss_object, metrics=[train_accuracy])
-history = model.fit(x_train, y_train, batch_size=128, epochs=5, validation_data=(x_valid,y_valid))
-plt.plot(history.history['loss'])
+history = model.fit(x_train, y_train, batch_size=1024, epochs=50, validation_data=(x_valid,y_valid))
+model.summary()
+plt.plot(history.history['loss'], label='Training Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.legend()
 plt.show()
+
+#test set results
+results = model.evaluate(x_test,y_test, batch_size=32)
+print("loss and accuracy", results)
+
 exit()
 
 @tf.function
