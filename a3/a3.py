@@ -61,80 +61,11 @@ model.summary()
 plt.plot(history.history['loss'], label='Training Loss')
 plt.plot(history.history['val_loss'], label='Validation Loss')
 plt.legend()
+plt.title("Loss over time")
+plt.xlabel('Epochs'); plt.ylabel('Loss')
+plt.savefig('loss.pdf', format='pdf')
 plt.show()
 
 #test set results
 results = model.evaluate(x_test,y_test, batch_size=32)
-print("loss and accuracy", results)
-
-exit()
-
-@tf.function
-def step(x,y):
-  with tf.GradientTape() as tape:
-    #print(x,y)
-    y_h = model(x, training=True)
-    #print(y_h)
-    loss = loss_object(y,y_h)
-    grads = tape.gradient(loss, model.trainable_variables)
-    optimizer.apply_gradients(zip(grads, model.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(y, y_h)
-
-@tf.function
-def train_step(images, labels):
-  with tf.GradientTape() as tape:
-    # training=True is only needed if there are layers with different
-    # behavior during training versus inference (e.g. Dropout).
-    predictions = model(images, training=True)
-    loss = loss_object(labels, predictions)
-  gradients = tape.gradient(loss, model.trainable_variables)
-  optimizer.apply_gradients(zip(gradients, model.trainable_variables))
-
-  train_loss(loss)
-  train_accuracy(labels, predictions)
-
-@tf.function
-def test_step(images, labels):
-  # training=False is only needed if there are layers with different
-  # behavior during training versus inference (e.g. Dropout).
-  predictions = model(images, training=False)
-  t_loss = loss_object(labels, predictions)
-
-  test_loss(t_loss)
-  test_accuracy(labels, predictions)
-
-EPOCHS = 5
-
-for epoch in range(EPOCHS):
-  # Reset the metrics at the start of the next epoch
-  train_loss.reset_states()
-  train_accuracy.reset_states()
-  test_loss.reset_states()
-  test_accuracy.reset_states()
-
-  #for x,y in zip(x_train,y_train):
-  #  print(x.shape)
-  #  print(y)
-  #  print(type(y))
-  #  step(x,y.astype("float32"))
-  
-  for images, labels in train_ds:
-    #print(images.shape)
-    #print(labels.shape)
-    #train_step(images, labels)
-    step(images,labels)
-
-  for test_images, test_labels in test_ds:
-    test_step(test_images, test_labels)
-
-  template = 'Epoch {}, Loss: {}, Accuracy: {}, Test Loss: {}, Test Accuracy: {}'
-  print(template.format(epoch + 1,
-                        train_loss.result(),
-                        train_accuracy.result() * 100,
-                        test_loss.result(),
-                        test_accuracy.result() * 100))
-
-#for test_images, test_labels in test_ds:
-#    test_step(test_images, test_labels)
+print("Tests set loss and accuracy:", results)
