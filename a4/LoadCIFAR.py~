@@ -1,0 +1,19 @@
+
+
+def unpickle(fname):
+    import pickle
+    with open(fname, 'rb') as f:
+        return pickle.load(f, encoding='bytes')
+
+def load_CIFAR10():
+    test = 'cifar-10-python'
+
+def load_CIFAR100():
+    test  = 'cifar-100-python/test'
+    train = 'cifar-100-python/train'
+    meta  = 'cifar-100-python/meta'
+
+    return unpickle(meta), unpickle(train), unpickle(test)
+
+if __name__ == '__main__':
+    meta, train, test = load_CIFAR100()

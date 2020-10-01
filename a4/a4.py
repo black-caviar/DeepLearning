@@ -10,24 +10,6 @@ import matplotlib.pyplot as plt
 # Convert pixels to floats 
 #train_images, test_images = train_images / 255.0, test_images / 255.0
 
-# Pretty class names, should come packaged with loader 
-#class_names = ['airplane', 'automobile', 'bird', 'cat', 'deer',
-#               'dog', 'frog', 'horse', 'ship', 'truck']
-
-# Demo plot
-#plt.figure(figsize=(10,10))
-#for i in range(25):
-#    plt.subplot(5,5,i+1)
-#    plt.xticks([])
-#    plt.yticks([])
-#    plt.grid(False)
-#    plt.imshow(train_images[i], cmap=plt.cm.binary)
-#    # The CIFAR labels happen to be arrays, 
-#    # which is why you need the extra index
-#    plt.xlabel(class_names[train_labels[i][0]])
-#plt.clf()
-#plt.show()
-
 # use functional model because Keras says so
 # who am I to say otherwise
 
@@ -55,7 +37,7 @@ model = keras.Model(inputs, outputs, name="MyModel")
 model.summary()
 
 # this needs additional packages
-keras.utils.plot_model(model, "mini_resnet.png", show_shapes=True)
+keras.utils.plot_model(model, "cifar10_model.png", show_shapes=True)
 
 #model.compile(optimizer='adam',
 #              loss=tf.keras.losses.SparseCategoricalCrossentropy(from_logits=True),
@@ -66,7 +48,9 @@ keras.utils.plot_model(model, "mini_resnet.png", show_shapes=True)
 
 
 
-(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+#(x_train, y_train), (x_test, y_test) = keras.datasets.cifar10.load_data()
+import LoadCIFAR
+(x_train, y_train), (x_test, y_test), meta = LoadCIFAR.CIFAR_2D(*LoadCIFAR.load_CIFAR10())
 
 x_train = x_train.astype("float32") / 255.0
 x_test = x_test.astype("float32") / 255.0
@@ -87,7 +71,7 @@ model.compile(
 )
 # We restrict the data to the first 1000 samples so as to limit execution time
 # on Colab. Try to train on the entire dataset until convergence!
-#history = model.fit(x_train, y_train, batch_size=256, epochs=10, validation_split=0.2)
-history = model.fit(x_train, y_train, epochs=20, validation_split=0.2)
+history = model.fit(x_train, y_train, batch_size=256, epochs=1, validation_split=0.2)
+#history = model.fit(x_train, y_train, epochs=20, validation_split=0.2)
 
 test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
