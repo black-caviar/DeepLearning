@@ -1,5 +1,4 @@
 import numpy as np
-import matplotlib.pyplot as plt
 
 def unpickle(fname):
     import pickle
@@ -9,15 +8,16 @@ def unpickle(fname):
 def load_CIFAR10():
     path = 'cifar-10-batches-py/data_batch_'
     data = np.array([]).reshape(0,3072)
-    labels = np.array([])
+    labels = np.array([], dtype='int32')
     for i in range(1,6):
         batch = unpickle(path + str(i))
         data = np.concatenate((data, batch[b'data']), axis=0)
         labels = np.concatenate((labels, batch[b'labels']), axis=0)
-
+        
     test = unpickle('cifar-10-batches-py/test_batch')
     meta = unpickle('cifar-10-batches-py/batches.meta')
-    return (data, labels), (test[b'data'], test[b'labels']), meta[b'label_names']
+    # for whatever reason test labels are regular array, need to be wrapped
+    return (data, labels), (test[b'data'], np.array(test[b'labels']).astype('int32')), meta[b'label_names']
                            
 
 def load_CIFAR100():
@@ -33,7 +33,6 @@ def load_CIFAR100():
     return train_d, test_d, meta_d
 
 def CIFAR_2D(train,test,meta):
-    #(train_x,train_y),(test_x,test_y),meta = load_CIFAR100()
     (train_x,train_y) = train
     (test_x,test_y) = test
     train_x = train_x.reshape(-1,3,1024).transpose([0,2,1]).reshape(-1,32,32,3)
@@ -41,6 +40,7 @@ def CIFAR_2D(train,test,meta):
     return (train_x, train_y), (test_x, test_y), meta
 
 if __name__ == '__main__':
+    import matplotlib.pyplot as plt
     _, (train_x,train_y), labels = CIFAR_2D(*load_CIFAR100())
     plt.figure(figsize=(10,10))
     for i in range(25):

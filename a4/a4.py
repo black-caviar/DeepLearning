@@ -4,12 +4,6 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
-# replace with custom loader 
-#(train_images, train_labels), (test_images, test_labels) = keras.datasets.cifar10.load_data()
-
-# Convert pixels to floats 
-#train_images, test_images = train_images / 255.0, test_images / 255.0
-
 # use functional model because Keras says so
 # who am I to say otherwise
 
@@ -30,7 +24,7 @@ x = layers.Conv2D(64, 3, activation="relu")(block_3_output)
 x = layers.GlobalAveragePooling2D()(x)
 x = layers.Dense(256, activation="relu")(x)
 x = layers.Dense(128, activation="relu")(x)
-x = layers.Dropout(0.3)(x)
+x = layers.Dropout(0.5)(x)
 outputs = layers.Dense(10)(x)
 
 model = keras.Model(inputs, outputs, name="MyModel")
@@ -54,24 +48,33 @@ import LoadCIFAR
 
 x_train = x_train.astype("float32") / 255.0
 x_test = x_test.astype("float32") / 255.0
-y_train = keras.utils.to_categorical(y_train, 10)
-y_test = keras.utils.to_categorical(y_test, 10)
-#print(y_test)
-# y_test is one hot encoded array
 
-top5 = tf.keras.metrics.TopKCategoricalAccuracy(5)
+top5 = tf.keras.metrics.SparseTopKCategoricalAccuracy(5, name='top5_acc')
+#accuracy = tf.keras.metrics.SparseCategoricalCrossentropy(name='acc')
 
-#metrics are not the same as loss functions though loss functions may be
-#used as metrics
+# metrics are not the same as loss functions though loss functions may be
+# used as metrics
 model.compile(
     #optimizer=keras.optimizers.RMSprop(1e-3),
     optimizer=keras.optimizers.Adam(),
-    loss=keras.losses.CategoricalCrossentropy(from_logits=True),
-    metrics=[top5],
+    loss=keras.losses.SparseCategoricalCrossentropy(from_logits=True),
+    metrics=[top5, 'acc'],
 )
-# We restrict the data to the first 1000 samples so as to limit execution time
-# on Colab. Try to train on the entire dataset until convergence!
-history = model.fit(x_train, y_train, batch_size=256, epochs=1, validation_split=0.2)
+
+history = model.fit(x_train, y_train, batch_size=256, epochs=10, validation_split=0.2)
+#history = model.fit(x_test, y_test, batch_size=256, epochs=5, validation_split=0.2)
 #history = model.fit(x_train, y_train, epochs=20, validation_split=0.2)
 
-test_loss, test_acc = model.evaluate(x_test, y_test, verbose=2)
+model.evaluate(x_test, y_test, verbose=2)
+
+#print(history.history.keys())
+
+plt.plot(history.history['acc'], label='Training Acc')
+plt.plot(history.history['val_acc'], label='Validation Acc')
+plt.plot(history.history['top5_acc'], label='Training Acc 5')
+plt.plot(history.history['val_top5_acc'], label='Validation Acc 5')
+plt.legend()
+plt.title("Loss over time")
+plt.xlabel('Epochs'); plt.ylabel('Loss')
+plt.savefig('loss.pdf', format='pdf')
+plt.show()
