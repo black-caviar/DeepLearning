@@ -7,25 +7,25 @@ import matplotlib.pyplot as plt
 # use functional model because Keras says so
 # who am I to say otherwise
 
+# Input constructs tensor
+
 inputs = keras.Input(shape=(32, 32, 3), name="img")
-x = layers.Conv2D(32, 3, activation="relu")(inputs)
-x = layers.Conv2D(64, 3, activation="relu")(x)
-block_1_output = layers.MaxPooling2D(3)(x)
+x = layers.Conv2D(3, (5,5), dilation_rate=2, activation="relu", padding='same')(inputs)
+x = layers.MaxPooling2D((2,2), strides=2)(x)
 
-x = layers.Conv2D(64, 3, activation="relu", padding="same")(block_1_output)
-x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
-block_2_output = layers.add([x, block_1_output])
+#x = layers.Conv2D(12, 5, strides=2, activation="relu")(x)
+#x = layers.MaxPooling2D((2,2), strides=2)(x)
 
-x = layers.Conv2D(64, 3, activation="relu", padding="same")(block_2_output)
-x = layers.Conv2D(64, 3, activation="relu", padding="same")(x)
-block_3_output = layers.add([x, block_2_output])
+#x = layers.Conv2D(6, 5, strides=2, activation="relu")(x)
+#x = layers.MaxPooling2D((2,2), strides=2)(x)
 
-x = layers.Conv2D(64, 3, activation="relu")(block_3_output)
-x = layers.GlobalAveragePooling2D()(x)
-x = layers.Dense(256, activation="relu")(x)
-x = layers.Dense(128, activation="relu")(x)
-x = layers.Dropout(0.5)(x)
+#x = layers.Conv2D(3, 5, strides=2, activation="relu")(x)
+#x = layers.MaxPooling2D((2,2), strides=2)(x)
+
+#x = layers.Dense(384, activation="relu")(x)
+#x = layers.Dense(128, activation="relu")(x)
 outputs = layers.Dense(10)(x)
+
 
 model = keras.Model(inputs, outputs, name="MyModel")
 model.summary()
