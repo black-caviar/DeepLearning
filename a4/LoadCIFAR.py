@@ -24,10 +24,9 @@ def load_CIFAR100():
     test  = unpickle('cifar-100-python/test')
     train = unpickle('cifar-100-python/train')
     meta  = unpickle('cifar-100-python/meta')
-    return (test[b'data'], test[b'fine_labels']), (train[b'data'], train[b'fine_labels']), meta[b'fine_label_names']
-    
-    test_d = test[b'data'], test[b'fine_labels']
-    train_d = train[b'data'], train[b'fine_labels']
+    #return (test[b'data'], test[b'fine_labels']), (train[b'data'], train[b'fine_labels']), meta[b'fine_label_names']
+    test_d = test[b'data'], np.array(test[b'fine_labels']).astype('int32')
+    train_d = train[b'data'], np.array(train[b'fine_labels']).astype('int32')
     meta_d = meta[b'fine_label_names']
     
     return train_d, test_d, meta_d
