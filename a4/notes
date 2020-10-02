@@ -66,3 +66,21 @@ x = layers.GlobalAveragePooling2D()(x)
 x = layers.Dense(256, activation="relu")(x)
 x = layers.Dense(128, activation="relu")(x)
 x = layers.Dropout(0.5)(x)
+
+
+model.evaluate(x_test, y_test, verbose=2)
+print(model.predict(x_test, y_test))
+y_pred = np.argsort(y_pred, axis=1)[:,-5,:]
+print(y_pred)
+print(labels[y_pred])
+
+plt.figure(figsize=(10,10))
+for i in range(25):
+    plt.subplot(5,5,i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid(False)
+    plt.imshow(x_test[i])
+    plt.xlabel(labels[y_test[i]].decode('utf-8'))
+plt.suptitle('CIFAR-10 Train Sample')
+plt.show()

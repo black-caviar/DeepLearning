@@ -17,14 +17,16 @@ def load_CIFAR10():
     test = unpickle('cifar-10-batches-py/test_batch')
     meta = unpickle('cifar-10-batches-py/batches.meta')
     # for whatever reason test labels are regular array, need to be wrapped
-    return (data, labels), (test[b'data'], np.array(test[b'labels']).astype('int32')), meta[b'label_names']
+    te_data = test[b'data']
+    te_labels = np.array(test[b'labels']).astype('int32')
+    return (data, labels), (te_data, te_labels), meta[b'label_names']
                            
 
 def load_CIFAR100():
     test  = unpickle('cifar-100-python/test')
     train = unpickle('cifar-100-python/train')
     meta  = unpickle('cifar-100-python/meta')
-    #return (test[b'data'], test[b'fine_labels']), (train[b'data'], train[b'fine_labels']), meta[b'fine_label_names']
+
     test_d = test[b'data'], np.array(test[b'fine_labels']).astype('int32')
     train_d = train[b'data'], np.array(train[b'fine_labels']).astype('int32')
     meta_d = meta[b'fine_label_names']
