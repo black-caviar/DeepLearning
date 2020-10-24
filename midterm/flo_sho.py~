@@ -1,0 +1,7 @@
+import glob
+import flowiz as tf
+import matplotlib.pyplot as plt
+
+files = glob.glob('FlyingChairs_release/data/*.flo')
+img = fz.convert_from_file(files[0])
+plt.imshow(img)
