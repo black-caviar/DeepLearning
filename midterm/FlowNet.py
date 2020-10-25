@@ -4,6 +4,19 @@ from tensorflow import keras
 from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
+def step_schedule(epoch):
+    l = 1e-4
+    #this is supposed to happen after epochs or batches?
+    n = epoch - 300000
+    if n > 0:
+        return l/(2 << n//100000)
+    else:
+        return l
+        
+def EPE(y_true, y_pred):
+    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+    return tf.reduce_mean(dist)
+
 def Refinement():
     ...
 
@@ -48,7 +61,17 @@ def FlowNetS():
 
 model = keras.Model(*FlowNetS(), name="FlowNetS")
 model.summary()
-#keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
+keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
+
+optimizer = tf.keras.optimizers.Adam(1e-4)
+#model.compile(loss=EPE
+
+rate_callback = keras.callbacks.LearningRateScheduler(step_schedule)
+#validation data is special
+#history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
+
+#batch_size = 8
+#mode.fit( yayaya, [rate_callback])
 
 #output should be bilinearly interpolated to full resolution
 #UpSampling2D is the function to use
