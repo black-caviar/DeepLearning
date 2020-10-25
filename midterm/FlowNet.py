@@ -20,54 +20,77 @@ def EPE(y_true, y_pred):
 def Refinement():
     ...
 
-def FlowNetS():
+#there is a difference between the model as trained and as deployed
+#The following is the model as deployed
+#or at least most of it
+def FlowNetS_deployed():
     #stride of 2 for each layer
     #relu after each layer
     inputs = keras.Input(shape=(384,512,6))
-    x = layers.Conv2D(64, 7, 2, padding='same',  name='conv1')(inputs)
-    c2out = layers.Conv2D(128, 5, 2, padding='same', name='conv2')(x)
-    x = layers.Conv2D(256, 5, 2, padding='same', name='conv3')(c2out)
-    c31out = layers.Conv2D(256, 3, padding='same', name='conv3_1')(x)
-    x = layers.Conv2D(512, 3, 2, padding='same', name='conv4')(c31out)
-    c41out = layers.Conv2D(512, 3, padding='same', name='conv4_1')(x)
-    x = layers.Conv2D(512, 3, 2, padding='same', name='conv5')(c41out)
-    c51out = layers.Conv2D(512, 3, padding='same', name='conv5_1')(x)
-    x = layers.Conv2D(1024, 3, 2, padding='same', name='conv6')(c51out)
+    x = layers.Conv2D(64, 7, 2, padding='same', name='conv1', activation='relu')(inputs)
+    c2out = layers.Conv2D(128, 5, 2, padding='same', name='conv2', activation='relu')(x)
+    x = layers.Conv2D(256, 5, 2, padding='same', name='conv3', activation='relu')(c2out)
+    c31out = layers.Conv2D(256, 3, 1, padding='same', name='conv3_1', activation='relu')(x)
+    x = layers.Conv2D(512, 3, 2, padding='same', name='conv4', activation='relu')(c31out)
+    c41out = layers.Conv2D(512, 3, 1, padding='same', name='conv4_1', activation='relu')(x)
+    x = layers.Conv2D(512, 3, 2, padding='same', name='conv5', activation='relu')(c41out)
+    c51out = layers.Conv2D(512, 3, 1, padding='same', name='conv5_1', activation='relu')(x)
+    x = layers.Conv2D(1024, 3, 2, padding='same', name='conv6', activation='relu')(c51out)
+    #add in extra c6_1 layer from release model
+    c61out = layers.Conv2D(1024, 3, 1, padding='same', name='conv6_1', activation='relu')(x)
 
     #Refinement section
-    x = layers.Conv2DTranspose(512, 5, 2, padding='same', name='deconv5')(x)
-    x = layers.Concatenate(axis=3)([x, c51out])
-    flow5 = layers.Conv2D(3, 5, padding='same', name='flow5')(x)
+    #kernel size 4 instead of 5?
+    decon5 = layers.Conv2DTranspose(512, 4, 2, padding='same', name='deconv5', activation='relu')(c61out)
+    flow6 = layers.Conv2D(2, 3, 1, padding='same', name='convolution1')(c61out)
+    flow6cup = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow6to5')(flow6)
+    #make sure to check the order on those concats
+    cat2 = layers.Concatenate(axis=3)([c51out,decon5,flow6cup])
 
+    decon4 = layers.Conv2DTranspose(256, 4, 2, padding='same', name='deconv4', activation='relu')(cat2)
+    flow5 = layers.Conv2D(2, 3, padding='same', name='convolution2')(cat2)
+    flow5up = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow5to4')(flow5)
     #it may be worth building a custom layer for this as it repeats a few times
-    x = layers.Conv2DTranspose(256, 5, 2, padding='same', name='deconv4')(x)
-    x = layers.Concatenate(axis=3)([x, c41out])
-    #flow5 should also be concated here somehow
-    flow4 = layers.Conv2D(3, 5, padding='same', name='flow4')(x)
+    cat3 = layers.Concatenate(axis=3)([c41out, decon4, flow5up])
 
-    x = layers.Conv2DTranspose(128, 5, 2, padding='same', name='deconv3')(x)
-    x = layers.Concatenate(axis=3)([x, c31out])
-    flow3 = layers.Conv2D(3, 5, padding='same', name='flow3')
+    #fux the fucking activation!!!
+    decon3 = layers.Conv2DTranspose(128, 4, 2, padding='same', name='deconv3', activation='relu')(cat3)
+    flow4 = layers.Conv2D(2, 3, padding='same', name='convolution3')(cat3)
+    flow4up = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow4to3')(flow4)
+    cat4 = layers.Concatenate(axis=3)([c31out, decon3, flow4up])
 
-    x = layers.Conv2DTranspose(64, 5, 2, padding='same', name='deconv2')(x)
-    x = layers.Concatenate(axis=3)([x, c2out])
-    x = layers.Conv2D(3, 5, padding='same')(x)
-    outputs = layers.UpSampling2D(2, interpolation='bilinear')(x)
+    decon2 = layers.Conv2DTranspose(64, 4, 2, padding='same', name='deconv2', activation='relu')(cat4)
+    flow3 = layers.Conv2D(2, 3, padding='same', name='convolution4')(cat4)
+    flow3up = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow3to2')(flow3)
+    cat5 = layers.Concatenate(axis=3)([c2out, decon2, flow3up])
 
-    #We repeat this4times,resulting in a predicted flow for which the resolution is still4times smaller than the input.
-    #this isn't 4x smaller but is 4x smaller in each dimension 
-    
+    x = layers.Conv2D(2, 3, 1, padding='same', name='convolution5')(cat5)
+    x = x*20; #why? because!
+    #some more bullshit here
+    #padding does nothing here right?
+    #some magic interpolation here
+    #convolution with constants for scaling purposes see actual model wtf
+    outputs = layers.Conv2D(2, 1, 1, padding='valid', name='convolution6')(x)    
     return inputs, outputs
 
-model = keras.Model(*FlowNetS(), name="FlowNetS")
+model = keras.Model(*FlowNetS_deployed(), name="FlowNetS")
 model.summary()
 keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
 optimizer = tf.keras.optimizers.Adam(1e-4)
 #model.compile(loss=EPE
 
+SAVE_PERIOD = 10
+
 rate_callback = keras.callbacks.LearningRateScheduler(step_schedule)
+checkpoint_callback = keras.callbacks.ModelCheckpoint(
+    filepath='checkpoints/model-{epoch%SAVE_PERIOD:04d}.hdf5',
+    save_freq='epoch',
+    period='SAVE_PERIOD',
+    save_weights_only=True)
+
 #validation data is special
+callbacks = [rate_callback, checkpoint_callback]
 #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
 
 #batch_size = 8
