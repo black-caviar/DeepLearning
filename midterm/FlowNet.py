@@ -5,6 +5,9 @@ from tensorflow.keras import layers
 import matplotlib.pyplot as plt
 
 def step_schedule(epoch):
+    #this learning rate may actually be incorrect
+    #base_lr = 1e-5 in solver prototype
+    #step interval is also off...
     l = 1e-4
     #this is supposed to happen after epochs or batches?
     n = epoch - 300000
@@ -17,8 +20,6 @@ def EPE(y_true, y_pred):
     dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
     return tf.reduce_mean(dist)
 
-def Refinement():
-    ...
 
 #there is a difference between the model as trained and as deployed
 #The following is the model as deployed
@@ -53,7 +54,6 @@ def FlowNetS_deployed():
     #it may be worth building a custom layer for this as it repeats a few times
     cat3 = layers.Concatenate(axis=3)([c41out, decon4, flow5up])
 
-    #fux the fucking activation!!!
     decon3 = layers.Conv2DTranspose(128, 4, 2, padding='same', name='deconv3', activation='relu')(cat3)
     flow4 = layers.Conv2D(2, 3, padding='same', name='convolution3')(cat3)
     flow4up = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow4to3')(flow4)
@@ -70,8 +70,11 @@ def FlowNetS_deployed():
     #padding does nothing here right?
     #some magic interpolation here
     #convolution with constants for scaling purposes see actual model wtf
-    outputs = layers.Conv2D(2, 1, 1, padding='valid', name='convolution6')(x)    
+    x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
+    outputs = layers.Conv2D(2, 1, 1, padding='valid', name='convolution6')(x)
+    #384, 512 output
     return inputs, outputs
+
 
 model = keras.Model(*FlowNetS_deployed(), name="FlowNetS")
 model.summary()
