@@ -20,6 +20,7 @@ def load_weights_from_file(weight_file):
 def set_layer_weights(model, weights_dict):
     for layer in model.layers:
         if layer.name in weights_dict:
+            print(layer.name)
             cur_dict = weights_dict[layer.name]
             current_layer_parameters = list()
             if layer.__class__.__name__ == "BatchNormalization":
@@ -47,7 +48,7 @@ def set_layer_weights(model, weights_dict):
                 if 'weights' in cur_dict:
                     current_layer_parameters = [cur_dict['weights']]
                 if 'bias' in cur_dict:
-                    current_layer_parameters.append(cur_dict['bias'])
+                    current_layer_parameters.append(np.squeeze(cur_dict['bias']))
             model.get_layer(layer.name).set_weights(current_layer_parameters)
 
     return model
@@ -57,7 +58,7 @@ def KitModel(weight_file = None):
     global weights_dict
     weights_dict = load_weights_from_file(weight_file) if not weight_file == None else None
         
-    data            = layers.Input(name = 'data', shape = (384, 512, 3,) )
+    data            = layers.Input(name = 'data', shape = (384, 512, 6,) )
     conv1_input     = layers.ZeroPadding2D(padding = ((3, 3), (3, 3)))(data)
     conv1           = convolution(weights_dict, name='conv1', input=conv1_input, group=1, conv_type='layers.Conv2D', filters=64, kernel_size=(7, 7), strides=(2, 2), dilation_rate=(1, 1), padding='valid', use_bias=True)
     ReLU1           = layers.Activation(name='ReLU1', activation='relu')(conv1)
@@ -139,7 +140,8 @@ def KitModel(weight_file = None):
     Eltwise4 = Convolution5 + 20
     model           = Model(inputs = [data], outputs = [Eltwise4])
     #model           = Model(inputs = [data], outputs = [Convolution5])
-    #set_layer_weights(model, weights_dict)
+    if weights_dict != None:
+        set_layer_weights(model, weights_dict)
     return model
 
 class my_add(keras.layers.Layer):
@@ -188,5 +190,5 @@ def convolution(weights_dict, name, input, group, conv_type, filters=None, **kwa
 
 if __name__ == '__main__':
      #load_weights_from_file('50351a4ff04c469e8db58de103982ac7.pb')
-     mymodel = KitModel()
+     mymodel = KitModel('checkpoints/trained_weights.npy')
      mymodel.summary()
