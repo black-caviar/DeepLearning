@@ -28,6 +28,8 @@ def FlowNetS_deployed():
     #stride of 2 for each layer
     #relu after each layer
     inputs = keras.Input(shape=(384,512,6))
+    #inputs = layers.Concatenate(axis=3)(inputs['img0'], inputs['img1'])
+    #perform concaction in network 
     x = layers.Conv2D(64, 7, 2, padding='same', name='conv1', activation='relu')(inputs)
     c2out = layers.Conv2D(128, 5, 2, padding='same', name='conv2', activation='relu')(x)
     x = layers.Conv2D(256, 5, 2, padding='same', name='conv3', activation='relu')(c2out)
