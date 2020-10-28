@@ -161,8 +161,9 @@ def test(model):
     img2 = tf.expand_dims(plt.imread(path+'img1.ppm'), 0)
     img1 = tf.cast(img1, tf.float32)/255.0
     img2 = tf.cast(img2, tf.float32)/255.0
+    
     print(img1.shape, img2.shape)
-    flow = model.predict([img1,img2])
+    flow = model.predict([tf.reverse(img1,[-1]),tf.reverse(img2,[-1])])
     
     plt.figure(1)
     plt.subplot(1,3,1)
@@ -177,40 +178,12 @@ def test(model):
 if __name__ == '__main__':
 
     #model = FlowNetS_deployed()
-    model = FlowNetS_deployed('checkpoints/trained_weights.npy', trainable=True)
+    model = FlowNetS_deployed('checkpoints/trained_weights.npy', trainable=False)
     model.summary()
     keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
-    optimizer = tf.keras.optimizers.Adam(1e-4)
-    loss_weights = [0.0, 0.32, 0.08, 0.02, 0.01, 0.005]
-    metrics = {'tf_op_layer_ResizeBilinear': EPE}
-    model.compile(optimizer=optimizer, loss=EPE, loss_weights=loss_weights, metrics=metrics)
-
-    SAVE_PERIOD = 10
-
-    rate_callback = keras.callbacks.LearningRateScheduler(step_schedule)
-    checkpoint_callback = keras.callbacks.ModelCheckpoint(
-        filepath='checkpoints/model-{epoch%SAVE_PERIOD:04d}.hdf5',
-        save_freq='epoch',
-        period='SAVE_PERIOD',
-        save_weights_only=True)
-
-    data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
-    data_train = ld.get_dataset('FlyingChairs_release/tfrecord/fc_train.tfrecords', 4)
+    #data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
+    #data_train = ld.get_dataset('FlyingChairs_release/tfrecord/fc_train.tfrecords', 4)
     
-    #test(model)
+    test(model)
 
-    #validation data is special
-    callbacks = [rate_callback, checkpoint_callback]
-    #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
-
-    model.fit(data_train, epochs=1, validation_data=data_valid, batch_size=4)
-    
-    #batch_size = 8
-
-    #looks like batch size is actually 4, not 8
-    #8 pics total
-    #mode.fit( yayaya, [rate_callback])
-    
-    #output should be bilinearly interpolated to full resolution
-    #UpSampling2D is the function to use
