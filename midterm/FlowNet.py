@@ -122,7 +122,7 @@ def FlowNetS_deployed(weight_file = None):
     #convolution with constants for scaling purposes see actual model wtf
     #x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
     #hardcoded values bad
-    outputs = tf.image.resize(x, (512,384), method=tf.image.ResizeMethod.BILINEAR)
+    outputs = tf.image.resize(x, size=(512,384), method=tf.image.ResizeMethod.BILINEAR)
     #I don't think this convolution does much
     #outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
@@ -131,6 +131,24 @@ def FlowNetS_deployed(weight_file = None):
         set_layer_weights(model, weights_dict)
     return model
 
+def test(model):
+    import flowiz as fz
+    path = 'testfiles/0000000-'
+    img1 = tf.expand_dims(plt.imread(path+'img0.ppm'), 0)
+    img2 = tf.expand_dims(plt.imread(path+'img1.ppm'), 0)
+    print(img1.shape, img2.shape)
+    flow = model.predict([img1,img2])
+    
+    plt.figure(1)
+    plt.subplot(1,3,1)
+    plt.imshow(img1.numpy().squeeze())
+    plt.subplot(1,3,2)
+    plt.imshow(img2.numpy().squeeze())
+    plt.subplot(1,3,3)
+    print(flow.shape)
+    plt.imshow(fz.convert_from_flow(flow.squeeze()))
+    plt.show()
+    
 if __name__ == '__main__':
 
     #model = FlowNetS_deployed()
@@ -139,7 +157,7 @@ if __name__ == '__main__':
     keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
     optimizer = tf.keras.optimizers.Adam(1e-4)
-    #model.compile(loss=EPE
+    model.compile(optimizer=optimizer, loss=EPE)
 
     SAVE_PERIOD = 10
 
@@ -149,6 +167,8 @@ if __name__ == '__main__':
         save_freq='epoch',
         period='SAVE_PERIOD',
         save_weights_only=True)
+
+    test(model)
 
     #validation data is special
     callbacks = [rate_callback, checkpoint_callback]
