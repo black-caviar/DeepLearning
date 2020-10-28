@@ -62,6 +62,11 @@ def step_schedule(epoch):
         return l
         
 def EPE(y_true, y_pred):
+    y_true = y_true * 0.05
+    dim = y_pred.shape.as_list()[1:-1]
+    print(dim)
+    if y_true.shape != y_pred.shape:
+        y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)    
     dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
     return tf.reduce_mean(dist)
 
@@ -69,7 +74,7 @@ def EPE(y_true, y_pred):
 #there is a difference between the model as trained and as deployed
 #The following is the model as deployed
 #or at least most of it
-def FlowNetS_deployed(weight_file = None):
+def FlowNetS_deployed(weight_file = None, trainable = False):
     weights_dict = load_weights_from_file(weight_file) if not weight_file == None else None
     #stride of 2 for each layer
     #relu after each layer
@@ -115,8 +120,8 @@ def FlowNetS_deployed(weight_file = None):
     flow3up = layers.Conv2DTranspose(2, 4, 2, padding='same', name='upsample_flow3to2')(flow3)
     cat5 = layers.Concatenate(axis=3)([c2out, decon2, flow3up])
 
-    x = layers.Conv2D(2, 3, 1, padding='same', name='Convolution5')(cat5)
-    x = x*20; #why? because!
+    flow2 = layers.Conv2D(2, 3, 1, padding='same', name='Convolution5')(cat5)
+    x = flow2*20; #why? because!
     #some more bullshit here
     #padding does nothing here right?
     #some magic interpolation here
@@ -127,7 +132,18 @@ def FlowNetS_deployed(weight_file = None):
     #I don't think this convolution does much
     #outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
-    model = Model(inputs = [img1,img2], outputs = [outputs])
+
+    #flow = keras.Input(shape=(384,512,2))
+    #why is this
+    #flow = flow * 0.05
+    
+    
+    model = [];
+    if trainable:
+        model = Model(inputs = [img1,img2], outputs = [outputs, flow2, flow3, flow4, flow5, flow6])
+    else:
+        model = Model(inputs = [img1,img2], outputs = [outputs])
+
     if weights_dict != None:
         set_layer_weights(model, weights_dict)
     return model
@@ -153,7 +169,7 @@ def test(model):
 if __name__ == '__main__':
 
     #model = FlowNetS_deployed()
-    model = FlowNetS_deployed('checkpoints/trained_weights.npy')
+    model = FlowNetS_deployed('checkpoints/trained_weights.npy', True)
     model.summary()
     keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
@@ -169,13 +185,15 @@ if __name__ == '__main__':
         period='SAVE_PERIOD',
         save_weights_only=True)
 
-    #data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 1)
+    data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
     
-    test(model)
+    #test(model)
 
     #validation data is special
     callbacks = [rate_callback, checkpoint_callback]
     #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
+
+    model.fit(data_valid, epochs=1)
     
     #batch_size = 8
 

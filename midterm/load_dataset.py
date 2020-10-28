@@ -27,8 +27,8 @@ def _parse_record(example):
     flow = example['flow']
     flow = tf.reshape(flow, [h,w,2])
     #is there way to auto generate dict?
-    #return img1, img2, flow
-    return {'img1':img1, 'img2':img2, 'flow':flow}
+    return (img1, img2), flow
+    #return {'img1':img1, 'img2':img2, 'flow':flow}
     
 def load_dataset(filename):
     dataset = tf.data.TFRecordDataset(filename, compression_type='ZLIB')
@@ -45,15 +45,15 @@ def test_dataset(filename):
     import matplotlib.pyplot as plt
     import flowiz as fz
     data = get_dataset(filename, 1)
-    elm = next(iter(data))
+    (img1, img2), flow = next(iter(data))
 
     plt.figure(1)
     plt.subplot(1,3,1)
-    plt.imshow(elm['img1'].numpy().squeeze())
+    plt.imshow(img1.numpy().squeeze())
     plt.subplot(1,3,2)
-    plt.imshow(elm['img2'].numpy().squeeze())
+    plt.imshow(img2.numpy().squeeze())
     plt.subplot(1,3,3)
-    plt.imshow(fz.convert_from_flow(elm['flow'].numpy().squeeze()))
+    plt.imshow(fz.convert_from_flow(flow.numpy().squeeze()))
     plt.show()
     
 '''
