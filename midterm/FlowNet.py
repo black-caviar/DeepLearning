@@ -72,12 +72,12 @@ def EPE(y_true, y_pred):
     if y_true.shape != y_pred.shape:
         #lets hope batching works correctly
         y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)
-    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=-1)
     return tf.reduce_mean(dist)
 
 def EPE_Accuracy(y_true, y_pred):
     y_true = y_true * 0.5
-    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=-1)
     return tf.reduce_mean(dist)
 
 def FlowNetS_deployed(weight_file = None, trainable = False):

@@ -33,10 +33,11 @@ def train(opts):
     model.compile(optimizer=optimizer, loss=loss, loss_weights=loss_weights, metrics=metrics)
     
     SAVE_PERIOD = 1
-    SESSION_ID = random.randint(0,9999)
+    #SESSION_ID = random.randint(0,9999)
     rate_callback = keras.callbacks.LearningRateScheduler(fn.fast_schedule)
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
-        filepath='checkpoints/model-{SESSION_ID:04d}-{epoch:04d}.hdf5',
+        #filepath='checkpoints/model-{SESSION_ID:04d}-{epoch:04d}.hdf5',
+        filepath='checkpoints/model-{epoch:04d}.hdf5',
         save_freq='epoch',
         #    period='SAVE_PERIOD',
         save_weights_only=True)
@@ -50,7 +51,7 @@ def train(opts):
     
     #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
     
-    model.fit(data_train, batch_size=4, epochs=opts.epochs, validation_data=data_valid, callbacks=callbacks)
+    model.fit(data_train, batch_size=4, epochs=opts.epochs, validation_data=data_valid, callbacks=callbacks, verbose=2)
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
