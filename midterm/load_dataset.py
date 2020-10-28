@@ -21,8 +21,10 @@ def _parse_record(example):
     w = 512
     img1 = tf.io.parse_tensor(example['img1'], tf.uint8)
     img1 = tf.reshape(img1, [h,w,3])
+    img1 = tf.cast(img1, tf.float32)/255.0
     img2 = tf.io.parse_tensor(example['img2'], tf.uint8)
     img2 = tf.reshape(img2, [h,w,3])
+    img2 = tf.cast(img2, tf.float32)/255.0
     #print(img1.shape, img2.shape)
     flow = example['flow']
     flow = tf.reshape(flow, [h,w,2])

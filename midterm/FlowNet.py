@@ -67,7 +67,7 @@ def EPE(y_true, y_pred):
     #print(dim)
     if y_true.shape != y_pred.shape:
         y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)    
-    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+        dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
     return tf.reduce_mean(dist)
 
 
@@ -153,6 +153,8 @@ def test(model):
     path = 'testfiles/0000000-'
     img1 = tf.expand_dims(plt.imread(path+'img0.ppm'), 0)
     img2 = tf.expand_dims(plt.imread(path+'img1.ppm'), 0)
+    img1 = tf.cast(img1, tf.float32)/255.0
+    img2 = tf.cast(img2, tf.float32)/255.0
     print(img1.shape, img2.shape)
     flow = model.predict([img1,img2])
     
@@ -169,7 +171,7 @@ def test(model):
 if __name__ == '__main__':
 
     #model = FlowNetS_deployed()
-    model = FlowNetS_deployed('checkpoints/trained_weights.npy', True)
+    model = FlowNetS_deployed('checkpoints/trained_weights.npy', False)
     model.summary()
     keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
@@ -188,7 +190,7 @@ if __name__ == '__main__':
     data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
     data_train = ld.get_dataset('FlyingChairs_release/tfrecord/fc_train.tfrecords', 4)
     
-    #test(model)
+    test(model)
 
     #validation data is special
     callbacks = [rate_callback, checkpoint_callback]
