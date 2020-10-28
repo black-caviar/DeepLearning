@@ -64,7 +64,7 @@ def step_schedule(epoch):
 def EPE(y_true, y_pred):
     y_true = y_true * 0.05
     dim = y_pred.shape.as_list()[1:-1]
-    print(dim)
+    #print(dim)
     if y_true.shape != y_pred.shape:
         y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)    
     dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
@@ -186,6 +186,7 @@ if __name__ == '__main__':
         save_weights_only=True)
 
     data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
+    data_train = ld.get_dataset('FlyingChairs_release/tfrecord/fc_train.tfrecords', 4)
     
     #test(model)
 
@@ -193,7 +194,7 @@ if __name__ == '__main__':
     callbacks = [rate_callback, checkpoint_callback]
     #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
 
-    model.fit(data_valid, epochs=1)
+    model.fit(data_train, epochs=1, validation_data=data_valid, batch_size=4)
     
     #batch_size = 8
 
