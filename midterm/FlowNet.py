@@ -4,6 +4,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 from tensorflow.keras.models import Model
 import matplotlib.pyplot as plt
+import load_dataset as ld
 
 weights_dict = dict()
 def load_weights_from_file(weight_file):
@@ -122,7 +123,7 @@ def FlowNetS_deployed(weight_file = None):
     #convolution with constants for scaling purposes see actual model wtf
     #x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
     #hardcoded values bad
-    outputs = tf.image.resize(x, size=(512,384), method=tf.image.ResizeMethod.BILINEAR)
+    outputs = tf.image.resize(x, size=(384,512), method=tf.image.ResizeMethod.BILINEAR)
     #I don't think this convolution does much
     #outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
@@ -168,6 +169,8 @@ if __name__ == '__main__':
         period='SAVE_PERIOD',
         save_weights_only=True)
 
+    #data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 1)
+    
     test(model)
 
     #validation data is special
