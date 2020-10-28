@@ -120,8 +120,11 @@ def FlowNetS_deployed(weight_file = None):
     #padding does nothing here right?
     #some magic interpolation here
     #convolution with constants for scaling purposes see actual model wtf
-    x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
-    outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
+    #x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
+    #hardcoded values bad
+    outputs = tf.image.resize(x, (512,384), method=tf.image.ResizeMethod.BILINEAR)
+    #I don't think this convolution does much
+    #outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
     model = Model(inputs = [img1,img2], outputs = [outputs])
     if weights_dict != None:
