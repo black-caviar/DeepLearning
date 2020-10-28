@@ -72,10 +72,13 @@ def FlowNetS_deployed(weight_file = None):
     weights_dict = load_weights_from_file(weight_file) if not weight_file == None else None
     #stride of 2 for each layer
     #relu after each layer
-    inputs = keras.Input(shape=(384,512,6))
+    #inputs = keras.Input(shape=(384,512,6))
+    img1 = keras.Input(shape=(384,512,3))
+    img2 = keras.Input(shape=(384,512,3))
+    catimg = layers.Concatenate(axis=3)([img1,img2])
     #inputs = layers.Concatenate(axis=3)(inputs['img0'], inputs['img1'])
     #perform concaction in network 
-    x = layers.Conv2D(64, 7, 2, padding='same', name='conv1', activation='relu')(inputs)
+    x = layers.Conv2D(64, 7, 2, padding='same', name='conv1', activation='relu')(catimg)
     c2out = layers.Conv2D(128, 5, 2, padding='same', name='conv2', activation='relu')(x)
     x = layers.Conv2D(256, 5, 2, padding='same', name='conv3', activation='relu')(c2out)
     c31out = layers.Conv2D(256, 3, 1, padding='same', name='conv3_1', activation='relu')(x)
@@ -120,7 +123,7 @@ def FlowNetS_deployed(weight_file = None):
     x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
     outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
-    model = Model(inputs = [inputs], outputs = [outputs])
+    model = Model(inputs = [img1,img2], outputs = [outputs])
     if weights_dict != None:
         set_layer_weights(model, weights_dict)
     return model
@@ -149,6 +152,9 @@ if __name__ == '__main__':
     #history = model.fit(x, y, batch_size=8, epochs=1, callbacks=[rate_callback])
     
     #batch_size = 8
+
+    #looks like batch size is actually 4, not 8
+    #8 pics total
     #mode.fit( yayaya, [rate_callback])
     
     #output should be bilinearly interpolated to full resolution
