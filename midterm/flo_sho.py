@@ -3,6 +3,8 @@ import flowiz as fz
 import matplotlib.pyplot as plt
 import IO
 
+path = 'FlyingChairs_release/tfrecord/fc_train.tfrecords'
+
 num = 1000
 
 img1 = sorted(glob.glob('FlyingChairs_release/data/*img1.ppm'))

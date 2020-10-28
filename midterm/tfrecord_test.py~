@@ -1,0 +1,26 @@
+import tensorflow as tf
+import glob
+import flowiz as fz
+import matplotlib.pyplot as plt
+import IO
+import numpy as np
+
+path = 'FlyingChairs_release/tfrecord/fc_train.tfrecords'
+feature = {
+        'image_a': tf.io.FixedLenFeature((), tf.string),
+        'image_b': tf.io.FixedLenFeature((), tf.string),
+        'flow': tf.io.FixedLenFeature((), tf.string),
+    }
+
+def _parse_record(proto):
+    return tf.io.parse_single_example(proto, feature)
+
+data = tf.data.TFRecordDataset(path, compression_type='ZLIB')
+
+y = []
+
+for x in  data.take(1):
+    y = _parse_record(x)
+    print(y.keys())
+    print(y['flow'].numpy())
+    
