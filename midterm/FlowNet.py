@@ -60,20 +60,26 @@ def step_schedule(epoch):
         return l/(2 << n//100000)
     else:
         return l
+
+def fast_schedule(epoch):
+    l = 1e-5
+    return l/(2 << epoch//5)
         
 def EPE(y_true, y_pred):
     y_true = y_true * 0.05
     dim = y_pred.shape.as_list()[1:-1]
     #print(dim)
     if y_true.shape != y_pred.shape:
-        y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)    
-        dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+        #lets hope batching works correctly
+        y_true = tf.image.resize(y_true, size=dim, method=tf.image.ResizeMethod.BILINEAR)
+    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
     return tf.reduce_mean(dist)
 
+def EPE_Accuracy(y_true, y_pred):
+    y_true = y_true * 0.5
+    dist = tf.norm(y_pred - y_true, ord='euclidean', axis=2)
+    return tf.reduce_mean(dist)
 
-#there is a difference between the model as trained and as deployed
-#The following is the model as deployed
-#or at least most of it
 def FlowNetS_deployed(weight_file = None, trainable = False):
     weights_dict = load_weights_from_file(weight_file) if not weight_file == None else None
     #stride of 2 for each layer
@@ -128,7 +134,7 @@ def FlowNetS_deployed(weight_file = None, trainable = False):
     #convolution with constants for scaling purposes see actual model wtf
     #x = layers.experimental.preprocessing.Resizing(384, 512, interpolation="bilinear", name='resample4')(x)
     #hardcoded values bad
-    outputs = tf.image.resize(x, size=(384,512), method=tf.image.ResizeMethod.BILINEAR)
+    flow_full = tf.image.resize(x, size=(384,512), method=tf.image.ResizeMethod.BILINEAR, name='flow_full')
     #I don't think this convolution does much
     #outputs = layers.Conv2D(2, 1, 1, padding='valid', name='Convolution6')(x)
     #384, 512 output
@@ -140,9 +146,9 @@ def FlowNetS_deployed(weight_file = None, trainable = False):
     
     model = [];
     if trainable:
-        model = Model(inputs = [img1,img2], outputs = [outputs, flow2, flow3, flow4, flow5, flow6])
+        model = Model(inputs = [img1,img2], outputs = [flow_full, flow2, flow3, flow4, flow5, flow6])
     else:
-        model = Model(inputs = [img1,img2], outputs = [outputs])
+        model = Model(inputs = [img1,img2], outputs = [flow_full])
 
     if weights_dict != None:
         set_layer_weights(model, weights_dict)
@@ -171,12 +177,14 @@ def test(model):
 if __name__ == '__main__':
 
     #model = FlowNetS_deployed()
-    model = FlowNetS_deployed('checkpoints/trained_weights.npy', False)
+    model = FlowNetS_deployed('checkpoints/trained_weights.npy', trainable=True)
     model.summary()
     keras.utils.plot_model(model, "FlowNetS_model.png", show_shapes=True)
 
     optimizer = tf.keras.optimizers.Adam(1e-4)
-    model.compile(optimizer=optimizer, loss=EPE)
+    loss_weights = [0.0, 0.32, 0.08, 0.02, 0.01, 0.005]
+    metrics = {'tf_op_layer_ResizeBilinear': EPE}
+    model.compile(optimizer=optimizer, loss=EPE, loss_weights=loss_weights, metrics=metrics)
 
     SAVE_PERIOD = 10
 
@@ -190,7 +198,7 @@ if __name__ == '__main__':
     data_valid = ld.get_dataset('FlyingChairs_release/tfrecord/fc_val.tfrecords', 4)
     data_train = ld.get_dataset('FlyingChairs_release/tfrecord/fc_train.tfrecords', 4)
     
-    test(model)
+    #test(model)
 
     #validation data is special
     callbacks = [rate_callback, checkpoint_callback]
