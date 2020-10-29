@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import IO
 import numpy as np
 
+# Test validity of tfrecord conversion
+
 path = 'FlyingChairs_release/tfrecord/fc_val.tfrecords'
 #path = 'FlyingChairs_release/images.tfrecords'
 feature = {

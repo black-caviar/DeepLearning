@@ -2,6 +2,9 @@ import tensorflow as tf
 #chair_train_dataset = tf.data.TFRecordDataset('FlyingChairs_release/tfrecord/fc_train.tfrecords')
 #chair_val_dataset = tf.data.TFRecordDataset('FlyingChairs_release/tfrecord/fc_val.tfrecords')
 
+# Custom dataset reader class
+# https://www.tensorflow.org/tutorials/load_data/tfrecord
+
 AUTOTUNE = tf.data.experimental.AUTOTUNE
 
 def _parse_record(example):
@@ -23,6 +26,7 @@ def _parse_record(example):
     img1 = tf.reshape(img1, [h,w,3])
     img1 = tf.cast(img1, tf.float32)/255.0
     img1 = tf.reverse(img1, [-1])
+    #reverse order to BGR as in Caffe 
     
     img2 = tf.io.parse_tensor(example['img2'], tf.uint8)
     img2 = tf.reshape(img2, [h,w,3])

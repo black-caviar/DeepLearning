@@ -1,4 +1,5 @@
 import os
+# Disable GPU to avoid conflicting with other TF sessons
 os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -8,6 +9,8 @@ import argparse
 import glob
 import IO
 import sys
+
+# Based on code by Sam Pepose
 
 def _bytes_feature(value):
   """Returns a bytes_list from a string / byte."""
@@ -36,6 +39,8 @@ def image_example(img1, img2, flow):
     #haha what is this line
     return tf.train.Example(features=tf.train.Features(feature=feature))
 
+# Flo reader based on 
+# https://stackoverflow.com/questions/28013200/reading-middlebury-flow-files-with-python-bytes-array-numpy
 def open_flo_file(filename):
     with open(filename, 'rb') as f:
         magic, = np.fromfile(f, np.float32, count=1)
@@ -55,53 +60,6 @@ def open_ppm_file(filename):
         
 
 path = 'FlyingChairs_release/'
-
-#img1 = sorted(glob.glob(path + '*img1.ppm'))
-#img2 = sorted(glob.glob(path + '*img2.ppm'))
-#flow = sorted(glob.glob(path + '*.flo'))
-
-#data = np.array((img1,img2,flow)).T
-#data = np.array([make_data(d) for d in data])
-#print(data)
-#dataset = tf.data.Dataset.from_tensor_slices(data)
-#dataset = dataset.map(make_data)
-#exit()
-
-'''
-img1_list = open(path + 'img1_list.txt', 'r')
-img2_list = open(path + 'img2_list.txt', 'r')
-flow_list = open(path + 'flo_list.txt', 'r')
-
-record_file = 'images.tfrecords'
-writer_opt = tf.io.TFRecordOptions(compression_type='ZLIB')
-with tf.io.TFRecordWriter(path + record_file, writer_opt) as writer:
-    count = 0
-    for flow_file in flow_list:
-        img1_file = next(img1_list).strip()
-        img2_file = next(img2_list).strip()
-        if (flow_file[5:10] != img1_file[5:10]):
-            print('error', flow_file[5:10])
-        if (flow_file[5:10] != img2_file[5:10]):
-            print('error', flow_file[5:10])
-
-        flo_w, flo_h, flo_dat = open_flo_file(path + flow_file.strip())
-        img1_dat = open_ppm_file(path + img1_file)
-        img2_dat = open_ppm_file(path + img2_file)
-
-        if img1_dat.shape != img2_dat.shape:
-            print('error, image shape mismatch')
-        if img1_dat.shape[0:2] != (flo_h,flo_w):
-            print('error, flo shape mismatch')
-            print(img1_dat.shape, (flo_h,flo_w))
-            exit()
-        
-        tf_example = image_example(img1_dat, img2_dat, flo_dat)
-        writer.write(tf_example.SerializeToString())
-        writer.close()
-        exit()
-        count += 1
-        print(count)
-'''
 
 def convert_dataset(indices, name):
   filename = os.path.join(FLAGS.out, name + '.tfrecords')

@@ -3,6 +3,8 @@ import flowiz as fz
 import matplotlib.pyplot as plt
 import IO
 
+# Demo flo file viewer
+
 path = 'FlyingChairs_release/tfrecord/fc_train.tfrecords'
 
 num = 1000
@@ -21,11 +23,3 @@ plt.subplot(1,3,3)
 flow_img = fz.convert_from_file(flow[num])
 plt.imshow(flow_img)
 plt.show()
-
-#flow_img = IO.read(flow[num])
-#plt.imshow(fz.convert_from_flow(flow_img))
-#plt.show()
-#
-#img = plt.imread(img1[num])
-#plt.imshow(img)
-#plt.show()

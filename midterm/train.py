@@ -7,6 +7,9 @@ import random
 
 #script to train the model
 
+def fast_schedule(epoch):
+    l = 1e-5
+    return l/(2 << epoch//10)
 
 def train(opts):
     #model = fn.FlowNetS_deployed('checkpoints/trained_weights.npy', trainable=True)
@@ -34,10 +37,10 @@ def train(opts):
     
     SAVE_PERIOD = 1
     #SESSION_ID = random.randint(0,9999)
-    rate_callback = keras.callbacks.LearningRateScheduler(fn.fast_schedule)
+    rate_callback = keras.callbacks.LearningRateScheduler(fast_schedule)
     checkpoint_callback = keras.callbacks.ModelCheckpoint(
-        #filepath='checkpoints/model-{SESSION_ID:04d}-{epoch:04d}.hdf5',
-        filepath='checkpoints/model-{epoch:04d}.hdf5',
+        #filepath='checkpoints/model-2-{SESSION_ID:04d}-{epoch:04d}.hdf5',
+        filepath='checkpoints/model-2-{epoch:04d}.hdf5',
         save_freq='epoch',
         #    period='SAVE_PERIOD',
         save_weights_only=True)

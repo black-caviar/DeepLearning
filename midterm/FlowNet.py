@@ -60,10 +60,6 @@ def step_schedule(epoch):
         return l/(2 << n//100000)
     else:
         return l
-
-def fast_schedule(epoch):
-    l = 1e-5
-    return l/(2 << epoch//5)
         
 def EPE(y_true, y_pred):
     y_true = y_true * 0.05
