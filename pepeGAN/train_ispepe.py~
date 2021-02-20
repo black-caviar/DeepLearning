@@ -1,0 +1,46 @@
+
+#load complete model
+#save weights
+#save complete model
+
+def main():
+    try: keras.models.load_model(FLAGS.model)
+    except Exception as e:
+        print(e)
+        exit(-1)
+
+    try: pepe = ld.pepe_256(FLAGS.pepe)
+    except Exception as e:
+        print(e)
+        exit(-1)
+
+    try: not_pepe = ld.pepe_256(FLAGS.not_pepe)
+    except Exception as e:
+        print(e)
+        exit(-1)
+
+    
+        
+if __name__ == '__main__':
+    p = argparse.ArgumentParser()
+    p.add_argument(
+        '--model',
+        type=str,
+        required=True,
+        help='Path to model'
+    )
+    p.add_argument(
+        '--pepe',
+        type=str,
+        required=True,
+        help='Path to pepe folder'
+    )
+    p.add_argument(
+        '--not-pepe',
+        type=str,
+        required=True,
+        help='Path to not pepe folder'
+    )
+    FLAGS = p.parse_args()
+    print(FLAGS)
+    main()

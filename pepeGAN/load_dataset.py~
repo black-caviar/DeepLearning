@@ -1,0 +1,20 @@
+import sys
+import PIL
+import tensorflow as tf
+AUTOTUNE = tf.data.experimental.AUTOTUNE
+
+def gen_dataset(path):
+    list_ds = tf.data.Dataset.list_files(path + '*.*')
+    data = list_ds.map(tf.io.read_file)
+    return data
+
+if __name__ == "__main__":
+    import os
+    os.environ["CUDA_VISIBLE_DEVICES"]="-1" 
+    import matplotlib.pyplot as plt
+    data = gen_dataset(sys.argv[1])
+    for f in data.take(1):
+        print(f)
+        print(f.numpy())
+        plt.imshow(f.numpy())
+        plt.show()
