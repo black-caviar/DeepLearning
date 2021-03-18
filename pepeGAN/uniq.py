@@ -3,8 +3,27 @@ import hashlib
 import argparse
 import pathlib
 import numpy as np
-import pandas as pd
-    
+import sqlite3
+from PIL import Image
+from PIL import ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
+import imagehash
+from tqdm import tqdm
+
+def get_db(filename):
+    if filename:
+        try:
+            return sqlite3.connect(filename)
+        except Exception as e:
+            print(e)
+            exit(1)
+    else:
+        try:
+            return sqlite3.connect(':memory:')
+        except Exception as e:
+            print(e)
+            exit(1)
+
 def load_meta(filename):
     try:
         #f = open(filename, "rw")
@@ -50,6 +69,43 @@ def make_unique(metafile, datapath):
     #print(md5clean.index.values)
     with open("unique.txt", "w") as f:
         f.write('\n'.join(md5clean.index.values))
+
+def main(args):
+    # purely to uniqify a single folder of images 
+    con = get_db(args.meta)
+    db = con.cursor()
+    db.execute('''CREATE TABLE images (name TEXT, md5 TEXT UNIQUE, hash TEXT)''')
+    flist = os.listdir(args.img)
+    with tqdm(total=len(flist)) as pbar:
+        for fname in flist:
+            path = os.path.join(args.img, fname);
+            try:
+                img = Image.open(path)
+            except IOError as e:
+                print("Failed to open file: %s" % path)
+                continue
+            img_hash = imagehash.dhash(img)
+            md5 = hashlib.md5(img.tobytes()).hexdigest()
+            try:
+                db.execute('INSERT INTO images VALUES (?, ?, ?)', (fname, md5, str(img_hash)))
+            except sqlite3.IntegrityError as e:
+                pass
+            pbar.update(1)
+    con.commit()
+    db.execute('SELECT COUNT(*) FROM images')
+    n_img = db.fetchone()
+    print(n_img[0], 'Different MD5')
+    db.execute('SELECT name FROM images WHERE hash=(SELECT hash FROM (SELECT hash, COUNT(hash) FROM images GROUP BY hash HAVING COUNT(hash)>1))')
+    idk = db.fetchall()
+    print(idk)
+    exit()
+    for set in idk:
+        for i in set:
+            img = Image.open(os.path.join(args.img, i))
+            print(img.size)
+            img.show()
+            img.close()
+    
     
 if __name__ == '__main__':
     parse = argparse.ArgumentParser()
@@ -64,4 +120,5 @@ if __name__ == '__main__':
     args = parse.parse_args()
     #print(args.meta)
     #print(args.img)
-    make_unique(args.meta, args.img);
+    main(args)
+    #make_unique(args.meta, args.img)

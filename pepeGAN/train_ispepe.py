@@ -16,25 +16,11 @@ data_augmentation = keras.Sequential([
     layers.experimental.preprocessing.RandomCrop(224,224),
 ])
 
-def augment_data(x,y):
-    #x = tf.image.grayscale_to_rgb(x)
-    if tf.shape(x)[2] != 3:
-        print("Fuck you 1")
-        x = tf.zeros([224,224,3])
-        return x,y
-        
+def augment_data(x,y):       
     x = tf.image.random_crop(x, [224,224,3]) #random crop to 224
     x = tf.image.random_flip_left_right(x) #flip half of images
     # there is no easy rotation in tf.image
     # but it can be done using PIL 
-    return x,y
-
-def resize_image(x,y):
-    if tf.shape(x)[2] != 3:
-        print("Fuck you 2")
-        x = tf.zeros([224,224,3])
-        return x,y
-    x = tf.image.resize(x, [224,224])
     return x,y
 
 def main():
@@ -56,53 +42,53 @@ def main():
         print(e)
         exit(-1)
 
-        
-    print("Found image files")
-    # perhaps the validation should occurr before shuffling?
-    # I think so
+    n_p = tf.data.experimental.cardinality(pepe).numpy()
+    n_np = tf.data.experimental.cardinality(not_pepe).numpy()
+    n_samples = n_p + n_np
+    print('Pepe images:', n_p)
+    print('Non-Pepe images:', n_np)
 
-    # I will have image augmentation of the validation set if I don't split it off now
+    VAL_SPLIT = int(n_samples * 0.15)
     
-    pnp_train, pnp_val = ld.construct_datasets(pepe, not_pepe)
-    pnp_train = pnp_train.map(ld.mobilenet_preprocess)
-    pnp_val = pnp_val.map(ld.mobilenet_preprocess)
-    
-    pnp_train = pnp_train.map(augment_data, num_parallel_calls=AUTOTUNE)
-    pnp_val = pnp_val.map(resize_image)
-    #pnp_train = pnp_train.cache()
-    #preprocessing needs to be done every epoch so do it later?
+    data = ld.construct_datasets(pepe, not_pepe)
+    data = data.map(ld.mobilenet_preprocess)
 
-    pnp_train = pnp_train.batch(32).prefetch(10)
-    pnp_val = pnp_val.batch(32)
-    # my pipeline is bonkers inefficient. Really need to try the layers api
+    val = data.take(VAL_SPLIT)
+    train = data.skip(VAL_SPLIT)
     
-    pnp_train.cache()
-    pnp_val.cache()
+    train = train.map(augment_data)
+    val = val.map(lambda x,y: (tf.image.resize(x, [224,224]),y))
+
+    train = train.batch(32)
+    val = val.batch(32)
     
-    model.summary()
-    
-    opt = keras.optimizers.Adam(learning_rate=0.001)
+    opt = keras.optimizers.Adam(learning_rate=0.01)
     loss = keras.losses.BinaryCrossentropy()
 
     c_path = 'checkpoints/cp-{epoch:04d}.ckpt'
-    cp_callback = keras.callbacks.ModelCheckpoint(c_path, save_weights_only=True)
+    cp_callback = keras.callbacks.ModelCheckpoint(
+        c_path,
+        monitor='val_binary_accuracy',
+        mode='max',
+        save_weights_only=True,
+        save_best_only=True)
 
     log_dir = 'logdir/fit/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
-    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir, profile_batch='2,5')
+    tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
-    #callbacks=[tensorboard_callback, cp_callback]
-    callbacks=[tensorboard_callback]
+    callbacks=[tensorboard_callback, cp_callback]
+    #callbacks=[tensorboard_callback]
+    #callbacks=[]
     
     model.compile(optimizer=opt, loss=loss, metrics='binary_accuracy')
     model.fit(
-        pnp_train,
-        epochs=10,
-        validation_data=pnp_val,
+        train,
+        epochs=FLAGS.epochs,
+        validation_data=val,
         callbacks=callbacks,
-        use_multiprocessing=True,
-        workers=4,
+        verbose=1
     )
-    #model.fit(pnp_train.batch(32), epochs=10,
+    #model.fit(pnp_train., epochs=10,
     #          validation_data=pnp_train.batch(4), callbacks=callbacks)
         
 if __name__ == '__main__':
@@ -118,6 +104,12 @@ if __name__ == '__main__':
         type=str,
         required=False,
         help='Path to last model checkpoint'
+    )
+    p.add_argument(
+        '--epochs',
+        type=int,
+        required=True,
+        help='Number of epochs to run for'
     )
     p.add_argument(
         '--pepe',

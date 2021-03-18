@@ -1,0 +1,6 @@
+import tensorflow as tf
+import load_dataset as ld
+import sys
+
+files = ld.get_image_list(sys.argv[1])
+data = files.map(lambda x: (x,ld.load_256(x)))
