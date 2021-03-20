@@ -1,0 +1,11 @@
+import tensorflow as tf
+from tensorflow import keras
+from tensorflow.keras import layers 
+import load_dataset as ld
+import sys
+
+b = ld.get_image_list(sys.argv[1])
+w = ld.get_image_list(sys.argb[2])
+data = ld.construct_datasets(b,w)
+data = data.map(lambda x,y: (ld.load_256(x),y))
+ld.show_dataset(data)
