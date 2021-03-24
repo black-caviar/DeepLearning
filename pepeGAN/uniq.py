@@ -9,6 +9,7 @@ from PIL import ImageFile
 ImageFile.LOAD_TRUNCATED_IMAGES = True
 import imagehash
 from tqdm import tqdm
+import matplotlib.pyplot as plt
 
 def get_db(filename):
     if filename:
@@ -70,6 +71,16 @@ def make_unique(metafile, datapath):
     with open("unique.txt", "w") as f:
         f.write('\n'.join(md5clean.index.values))
 
+def show_dupes(db):
+    idk = db.execute('SELECT md5 FROM (SELECT md5, COUNT(md5) FROM images GROUP BY md5 HAVING COUNT(md5)>1)')
+    for row in idk.fetchall():
+        db.execute('SELECT name FROM images WHERE md5=?', row)
+        dupes = db.fetchall()
+        print(dupes)
+        for i in dupes:
+            img = Image.open(os.path.join(args.img, i[0]))
+            #img.show()
+
 def main(args):
     # purely to uniqify a single folder of images 
     con = get_db(args.meta)
@@ -81,11 +92,13 @@ def main(args):
             path = os.path.join(args.img, fname);
             try:
                 img = Image.open(path)
+                fimg = open(path, 'rb')
             except IOError as e:
                 print("Failed to open file: %s" % path)
                 continue
             img_hash = imagehash.dhash(img)
             md5 = hashlib.md5(img.tobytes()).hexdigest()
+            #md5 = hashlib.md5(fimg.read()).hexdigest()
             try:
                 db.execute('INSERT INTO images VALUES (?, ?, ?)', (fname, md5, str(img_hash)))
             except sqlite3.IntegrityError as e:
@@ -95,16 +108,12 @@ def main(args):
     db.execute('SELECT COUNT(*) FROM images')
     n_img = db.fetchone()
     print(n_img[0], 'Different MD5')
-    db.execute('SELECT name FROM images WHERE hash=(SELECT hash FROM (SELECT hash, COUNT(hash) FROM images GROUP BY hash HAVING COUNT(hash)>1))')
-    idk = db.fetchall()
-    print(idk)
-    exit()
-    for set in idk:
-        for i in set:
-            img = Image.open(os.path.join(args.img, i))
-            print(img.size)
-            img.show()
-            img.close()
+    if args.out:
+        outf = open(args.out, 'w')
+        db.execute('SELECT * FROM images')
+        for row in db:
+            print(row[0], file=outf)
+            
     
     
 if __name__ == '__main__':
@@ -117,6 +126,10 @@ if __name__ == '__main__':
         help='Path to image directory',
         type=str,
         required=True,)
+    parse.add_argument('-out', 
+        help='Path to output file',
+        type=str,
+        required=False)
     args = parse.parse_args()
     #print(args.meta)
     #print(args.img)

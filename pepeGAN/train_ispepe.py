@@ -35,7 +35,6 @@ def main():
         print(e)
         exit(-1)
 
-
     model.summary()
 
     n_p = tf.data.experimental.cardinality(pepe).numpy()
@@ -52,15 +51,21 @@ def main():
 
     train = train.map(ld.augment_data, num_parallel_calls=AUTOTUNE).batch(32)
     val = val.map(ld.resize_224, num_parallel_calls=AUTOTUNE).batch(32)
-    
-    opt = keras.optimizers.Adam(learning_rate=0.01)
+
+    sched = keras.optimizers.schedules.ExponentialDecay(
+        initial_learning_rate=0.01,
+        decay_steps=10000,
+        #decay_steps=10,
+        decay_rate=0.70,
+        staircase=True)
+    opt = keras.optimizers.Adam(learning_rate=sched)
     loss = keras.losses.BinaryCrossentropy(from_logits=True)
 
     #c_path = 'checkpoints/cp-{epoch:04d}.ckpt'
-    c_path = 'checkpoints/checkpoint-test1.ckpt'
+    c_path = 'checkpoints/checkpoint-test3.ckpt'
     cp_callback = keras.callbacks.ModelCheckpoint(
         c_path,
-        monitor='val_binary_accuracy',
+        monitor='val_accuracy',
         mode='max',
         save_weights_only=True,
         save_best_only=True)
@@ -68,14 +73,14 @@ def main():
     log_dir = 'logdir/fit/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
-    #callbacks=[tensorboard_callback, cp_callback]
+    callbacks=[tensorboard_callback, cp_callback]
     #callbacks=[tensorboard_callback]
-    callbacks=[]
+    #callbacks=[]
 
     model.compile(
         optimizer=opt,
         loss=loss,
-        metrics=['accuracy', 'binary_accuracy'])
+        metrics=['accuracy'])
     
     model.fit(
         train,

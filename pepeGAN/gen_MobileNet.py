@@ -5,20 +5,24 @@ from tensorflow.keras.applications import mobilenet
 
 def MobileNet_binary(weights='imagenet', shape=(224,224,3), train_core=False):
     inputs = layers.Input(shape)
+    norm = keras.layers.BatchNormalization(axis=[1,2])(inputs)
+    reg = tf.keras.regularizers.l2(l2=0.001)
     core = keras.applications.MobileNetV2(
         alpha=1.0,
         include_top=False,
         weights=weights,
         input_tensor=None,
         pooling=None,
-        classifier_activation='softmax', 
+        classifier_activation='softmax',
     )
-    x = core(inputs, training=train_core)
+    x = core(norm, training=train_core)
     x = layers.GlobalAveragePooling2D()(x)
-    outputs = layers.Dense(1,
+    outputs = layers.Dense(
+        1,
         activation='sigmoid',
         kernel_initializer='random_normal',
-        bias_initializer='zeros')(x)
+        bias_initializer='zeros',
+        kernel_regularizer=reg)(x)
     return keras.Model(inputs, outputs)
 
 def test_net():
