@@ -73,9 +73,9 @@ def main():
     log_dir = 'logdir/fit/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
-    callbacks=[tensorboard_callback, cp_callback]
+    #callbacks=[tensorboard_callback, cp_callback]
     #callbacks=[tensorboard_callback]
-    #callbacks=[]
+    callbacks=[]
 
     model.compile(
         optimizer=opt,
@@ -89,6 +89,10 @@ def main():
         callbacks=callbacks,
         verbose=1
     )
+
+    for batch in val:
+        y = model(batch)
+        print(y)
         
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
