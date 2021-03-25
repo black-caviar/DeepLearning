@@ -15,15 +15,13 @@ def get_data(pepe, not_pepe):
     return data
 
 def main():
-    #try: model = keras.models.load_model(FLAGS.model)
-    try: model = mn.MobileNet_binary(weights=FLAGS.model, train_core=True)
-    #try: model = mn.test_net()
-    except Exception as e:
-        print(e)
-        exit(-1)
-
     if FLAGS.checkpoint:
+        model = mn.MobileNet_binary(train_core=True)
         model.load_weights(FLAGS.checkpoint)
+    elif FLAGS.model:
+        model = keras.models.load_model(FLAGS.model)
+    else:
+        model = mn.MobileNet_binary(train_core=True)
 
     try: pepe = ld.get_image_list(FLAGS.pepe)
     except Exception as e:
@@ -67,15 +65,15 @@ def main():
         c_path,
         monitor='val_accuracy',
         mode='max',
-        save_weights_only=True,
+        save_weights_only=False,
         save_best_only=True)
 
     log_dir = 'logdir/fit/' + datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
     tensorboard_callback = tf.keras.callbacks.TensorBoard(log_dir=log_dir)
 
-    #callbacks=[tensorboard_callback, cp_callback]
+    callbacks=[tensorboard_callback, cp_callback]
     #callbacks=[tensorboard_callback]
-    callbacks=[]
+    #callbacks=[]
 
     model.compile(
         optimizer=opt,
@@ -89,17 +87,13 @@ def main():
         callbacks=callbacks,
         verbose=1
     )
-
-    for batch in val:
-        y = model(batch)
-        print(y)
         
 if __name__ == '__main__':
     p = argparse.ArgumentParser()
     p.add_argument(
         '--model',
         type=str,
-        required=True,
+        required=False,
         help='Path to model'
     )
     p.add_argument(
